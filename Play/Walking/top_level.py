@@ -47,7 +47,8 @@ class UserCommand(object):
         self.mode = BALANCE
         self.target_mode = BALANCE
         self.mode_name = {BALANCE: 'BALANCE',
-                          WALK: 'WALK'}
+                          WALK: 'WALK',
+                         2:     'ROCKING'}
         self.parameter = defaultdict(lambda: defaultdict(int))
         for idx in PARAMETER_ID_LIST:
             self.parameter[idx]['value_raw'] = PARAMETER_DEFAULT[idx]
@@ -140,6 +141,8 @@ class UserCommand(object):
                 elif cmd == '1':
                     self.target_mode = WALK
                     self.in_lidar_cmd = False
+                elif cmd == '2':
+                    self.target_mode = 2
                 if self.mode != self.target_mode:
                     self.in_recover = True
 
@@ -174,7 +177,8 @@ class UserCommand(object):
                     self.target_mode = BALANCE
                 elif Bruce.gamepad['Y']:
                     self.target_mode = WALK
-
+                elif Bruce.gamepad['X']:
+                    self.target_mode = ROCKING
                 if self.mode != self.target_mode:
                     self.in_recover = True
 
