@@ -559,7 +559,7 @@ def main_loop():
 
             # ---------- Parameters of Rock ---------------------------------------------------------------
             sway_amplitude = 0.05           # Position ±1cm
-            sway_period = 1.0               # period 2s
+            sway_period = 1.0               # period 1s
             max_roll_deg = 5.0              # rolling angle ±3°
             Rocking_Time = 10               # Rocking Time
             # COM Position
