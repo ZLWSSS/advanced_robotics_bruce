@@ -1,3 +1,13 @@
+# Advanced Robotics LW part
+* when walking, button '2' : wave hands
+* when walking, button '3': start receiving cmd from lcm.
+* The lcm types are included in the directory lcm_types.
+* After adding new type: run ./make_types.sh
+* the demo code of lcm command is the lcm_test.py
+```python
+python3 -m Play.Walking.lcm_test    
+``` 
+
 # BRUCE-OP
 
 Repo for BRUCE Open-Platform.
