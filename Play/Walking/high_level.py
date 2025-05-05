@@ -538,7 +538,162 @@ def main_loop():
             dyawd = 0.  # yaw rate
 
             step_num = 0  # current step number
+####################################################################################################     
 
+        elif Bruce.cmd_mode == 2:
+            print("Rocking!!!!!")
+            # fix feet
+            left_foot_pos = np.copy(Bruce.p_wf_l)
+            right_foot_pos = np.copy(Bruce.p_wf_r)
+
+            # Stand
+            plan_data['mode'] = np.zeros(1)
+            plan_data['phase'] = np.zeros(1)
+
+            plan_data['left_foot_position'] = left_foot_pos
+            plan_data['right_foot_position'] = right_foot_pos
+            plan_data['left_foot_rot_matrix'] = MF.Rz(Bruce.yaw)
+            plan_data['right_foot_rot_matrix'] = MF.Rz(Bruce.yaw)
+            plan_data['left_foot_ang_rate'] = np.zeros(3)
+            plan_data['right_foot_ang_rate'] = np.zeros(3)
+
+            # ---------- Parameters of Rock ---------------------------------------------------------------
+            sway_amplitude = 0.05           # Position ±1cm
+            sway_period = 1.0               # period 2s
+            max_roll_deg = 5.0              # rolling angle ±3°
+            Rocking_Time = 10               # Rocking Time
+            # COM Position
+            com_base = np.copy(Bruce.p_wg)
+            com_base[1] = 0.0 
+            t0 = Bruce.get_time()
+
+            while Bruce.cmd_mode == 2:
+                t = Bruce.get_time() - t0
+                if t > Rocking_Time:
+                    print('stop')
+                    break #stop after 5s.
+
+                # offset poistion
+                offset = sway_amplitude * np.sin(2 * np.pi * t / sway_period)
+                roll_angle = max_roll_deg * np.sin(2 * np.pi * t / sway_period)
+
+                # COM
+                com_target = np.copy(com_base)
+                com_target[1] += offset  # Y axis
+                plan_data['com_position'] = com_target
+                plan_data['com_velocity'] = np.zeros(3)
+
+                # Rolling
+                R_roll = MF.Rx(np.radians(roll_angle))
+                R_yaw = MF.Rz(Bruce.yaw)
+                plan_data['body_rot_matrix'] = R_roll @ R_yaw  # roll + yaw
+
+                # fix feet
+                plan_data['left_foot_position'] = left_foot_pos
+                plan_data['right_foot_position'] = right_foot_pos
+
+                
+                MM.PLANNER_COMMAND.set(plan_data)
+                Bruce.update_input_status()
+                time.sleep(0.002)
+            print("Rocking end.")
+
+            
+            stable_com = np.copy(com_base)
+            stable_rot = MF.Rz(Bruce.yaw)
+            left_foot_pos = np.copy(Bruce.p_wf_l)
+            right_foot_pos = np.copy(Bruce.p_wf_r)
+
+            while Bruce.cmd_mode == 2:
+                plan_data['com_position'] = stable_com
+                plan_data['com_velocity'] = np.zeros(3)
+                plan_data['body_rot_matrix'] = stable_rot
+                plan_data['left_foot_position'] = left_foot_pos
+                plan_data['right_foot_position'] = right_foot_pos
+                MM.PLANNER_COMMAND.set(plan_data)
+                Bruce.update_input_status()
+                time.sleep(0.002)
+            # keep balancing until command walking
+            p_wg_0 = np.copy(p_wg_1)
+            R_wb_0 = np.copy(R_wb_1)
+            while Bruce.cmd_mode == 2:
+                Te = Bruce.get_time() - T0
+
+                if Te > 1:
+                    if not thread_run:
+                        MM.THREAD_STATE.set({'high_level': np.array([1.0])}, opt='only')  # thread is running
+                        thread_run = True
+
+                    # check threading error
+                    if Bruce.thread_error():
+                        Bruce.stop_threading()
+
+                # user input update
+                Bruce.update_input_status()
+
+                # manipulating CoM
+                # lateral
+                y_pos_dir = Bruce.p_wf_l - foot_mid_center   # left  direction
+                y_neg_dir = Bruce.p_wf_r - foot_mid_center   # right direction
+                if Bruce.cmd_p_wg_change[1] >= 0.:
+                    dp_xy = y_pos_dir[0:2] * +Bruce.cmd_p_wg_change[1]
+                else:
+                    dp_xy = y_neg_dir[0:2] * -Bruce.cmd_p_wg_change[1]
+
+                # longitudinal
+                if Bruce.cmd_p_wg_change[0] >= 0.:
+                    dp_xy += x_pos_dir[0:2] * +Bruce.cmd_p_wg_change[0]
+                else:
+                    dp_xy += x_neg_dir[0:2] * -Bruce.cmd_p_wg_change[0]
+
+                # vertical
+                dp_z = Bruce.cmd_p_wg_change[2]
+
+                plan_data['com_position'] = p_wg_0 + np.array([dp_xy[0],
+                                                               dp_xy[1],
+                                                               dp_z])
+
+                # manipulating body orientation
+                plan_data['body_rot_matrix'] = R_wb_0 @ Bruce.cmd_R_change
+
+                MM.PLANNER_COMMAND.set(plan_data)
+                time.sleep(0.001)
+
+            # shift CoM for walking again
+            Bruce.update_robot_DCM_status()
+            p_wg_1 = np.copy(p_wg_0)
+            if leg_st == +1.:
+                p_st_xy = Bruce.p_wf_r[0:2]
+            elif leg_st == -1.:
+                p_st_xy = Bruce.p_wf_l[0:2]
+            p_wg_1[0:2] += (p_st_xy - p_wg_1[0:2]) * 0.70 + ka * x_pos_dir[0:2]
+            t1 = 0.8
+            te = 0.
+            t0 = Bruce.get_time()
+            while te <= t1:
+                te = Bruce.get_time() - t0
+                plan_data['com_position'] = p_wg_0 + (p_wg_1 - p_wg_0) / t1 * te
+                plan_data['com_velocity'] = np.zeros(3)
+
+                MM.PLANNER_COMMAND.set(plan_data)
+                time.sleep(0.001)
+
+            # initialize walking parameters
+            # each step can have different velocities
+            vxd  = np.zeros(N) # Desired velocities in X directions.
+            vyd  = np.zeros(N) # Desired velocities in Y directions.
+            Lox  = np.zeros(N) # Nominal step difference in the X direction (forward/backward).
+            Woy  = np.zeros(N) # Nominal pelvis movement in the Y direction (side-to-side).
+            box  = np.zeros(N) # Nominal initial DCM offset in the X direction.
+            boy1 = np.zeros(N) # Nominal initial DCM offset in the Y direction.
+            boy2 = np.zeros(N) # Lateral displacement parameter for DCM offset.
+
+            pxyd  = np.copy(Bruce.p_wg[0:2]) # desired position of the CoM in the XY plane
+            yawd  = Bruce.yaw # desired yaw angle of the robot.
+            dyawd = 0. # yaw rate
+
+            step_num = 0 # current step number
+###########################################################################################################
         # initialize current cycle
         leg_st *= -1  # desired stance leg
         Ts_sol = Ts  # optimal Ts [s]
