@@ -277,33 +277,46 @@ class UserCommand(object):
                       }
         MM.USER_COMMAND.set(input_data)
 
+    # def wave(self):
+    #     if self.wave_count < arm_trajectory[0].size:
+    #         if self.wave_hand == -1:
+    #             for idx, joint in enumerate(ARM_JOINT_LIST[0:3]):
+    #                 Bruce.joint[joint]['q_goal'] = arm_trajectory[idx][self.wave_count]
+    #             for idx, joint in enumerate(ARM_JOINT_LIST[3:6]):
+    #                 Bruce.joint[joint]['q_goal'] = arm_position_nominal[idx + 3]
+    #         elif self.wave_hand == 1:
+    #             for idx, joint in enumerate(ARM_JOINT_LIST[0:3]):
+    #                 Bruce.joint[joint]['q_goal'] = arm_position_nominal[idx]
+    #             for idx, joint in enumerate(ARM_JOINT_LIST[3:6]):
+    #                 Bruce.joint[joint]['q_goal'] = arm_trajectory[idx + 3][self.wave_count]
+    #         else:
+    #             for idx, joint in enumerate(ARM_JOINT_LIST):
+    #                 Bruce.joint[joint]['q_goal'] = arm_trajectory[idx][self.wave_count]
+    #         Bruce.set_command_arm_positions()
+    #         self.wave_count += 1
+    #     else:
+    #         self.wave_count = 0
+    #         self.in_wave = False
+    #         val = random.random()
+    #         if val > 0.666:
+    #             self.wave_hand = -1
+    #         elif val > 0.333:
+    #             self.wave_hand = 1
+    #         else:
+    #             self.wave_hand = 2
+
+
     def wave(self):
-        if self.wave_count < arm_trajectory[0].size:
-            if self.wave_hand == -1:
-                for idx, joint in enumerate(ARM_JOINT_LIST[0:3]):
-                    Bruce.joint[joint]['q_goal'] = arm_trajectory[idx][self.wave_count]
-                for idx, joint in enumerate(ARM_JOINT_LIST[3:6]):
-                    Bruce.joint[joint]['q_goal'] = arm_position_nominal[idx + 3]
-            elif self.wave_hand == 1:
-                for idx, joint in enumerate(ARM_JOINT_LIST[0:3]):
-                    Bruce.joint[joint]['q_goal'] = arm_position_nominal[idx]
-                for idx, joint in enumerate(ARM_JOINT_LIST[3:6]):
-                    Bruce.joint[joint]['q_goal'] = arm_trajectory[idx + 3][self.wave_count]
-            else:
-                for idx, joint in enumerate(ARM_JOINT_LIST):
-                    Bruce.joint[joint]['q_goal'] = arm_trajectory[idx][self.wave_count]
+        total_frames = arm_trajectory[0].size
+        if self.wave_count < total_frames:
+            for idx, joint in enumerate(ARM_JOINT_LIST):
+                Bruce.joint[joint]['q_goal'] = arm_trajectory[idx][self.wave_count]
             Bruce.set_command_arm_positions()
             self.wave_count += 1
         else:
             self.wave_count = 0
             self.in_wave = False
-            val = random.random()
-            if val > 0.666:
-                self.wave_hand = -1
-            elif val > 0.333:
-                self.wave_hand = 1
-            else:
-                self.wave_hand = 2
+
 
     def display(self):
         # get BEAR info
