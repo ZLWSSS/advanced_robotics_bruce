@@ -1,0 +1,8 @@
+package bruce_cmd;
+
+struct bruce_cmd_t
+{
+    double   b_position[3];
+    double   rpy[4];
+    double   b_velocity[3];
+}

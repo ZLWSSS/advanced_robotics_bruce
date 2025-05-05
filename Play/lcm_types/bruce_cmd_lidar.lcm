@@ -1,0 +1,8 @@
+package bruce_cmd_lidar;
+
+struct bruce_cmd_lidar_t
+{
+    double   com_z;
+    double   com_velocity[2];
+    double   ang_vel_yaw;
+}

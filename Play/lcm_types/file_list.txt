@@ -1,0 +1,1 @@
+bruce_cmd/bruce_cmd_t.class bruce_cmd_lidar/bruce_cmd_lidar_t.class bruce_data/bruce_data_t.class
