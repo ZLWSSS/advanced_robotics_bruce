@@ -78,7 +78,7 @@ COOLING_SPEED      = 12
 PARAMETER_ID_LIST      = range(13)
 PARAMETER_INCREMENT    = [ 0.05,  0.05,  0.002,       1,     1,     2,    0.01,  0.01,     1,       1,     1,  0.01,       1]
 PARAMETER_DEFAULT      = [ 0.00,  0.00,  0.000,       0,     0,     0,     0.0,   0.0,     0,       0,     0,  0.12,       0]
-PARAMETER_MAX          = [ 0.20,  0.50,  0.020,       8,    10,    20,    0.10,  0.10,    15,      10,    10,  0.20,       5]
+PARAMETER_MAX          = [ 0.20,  0.50,  0.020,       8,    10,    30,    0.10,  0.10,    15,      10,    10,  0.20,       5]
 PARAMETER_MIN          = [-0.20, -0.50, -0.200,      -8,   -10,   -20,   -0.10, -0.10,   -15,     -10,   -10,  0.03,       0]
 # walk and balance can change without display.
 PARAMETER_BUTTON_PLUS  = [  'g',   'j',    'l',     'y',   'i',   'p',     'w',   'a',   'q',     'x',   'v',   'm',     '=']
@@ -88,6 +88,7 @@ PARAMETER_RECOVER      = [  'y',   'y',    'y',     'y',   'y',   'y',     'y', 
 
 BALANCE = 0
 WALK    = 1
+ROCKING = 2
 PARAMETER_MODE_LIST = {COM_POSITION_X:     [BALANCE],
                        COM_POSITION_Y:     [BALANCE],
                        COM_POSITION_Z:     [BALANCE, WALK],

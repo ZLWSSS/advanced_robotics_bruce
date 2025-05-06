@@ -7,6 +7,10 @@ __project__ = "BRUCE"
 __version__ = "0.0.5"
 __status__ = "Product"
 
+import math
+
+import numpy as np
+
 '''
 User Input
 '''
@@ -36,12 +40,14 @@ class UserCommand(object):
         self.display_dt = 1 / display_frequency
         self.last_display_time = time.time()
         self.loop_count = 0
+        self.rocking_iter: float = 0.0
 
         # user command
         self.in_operate = True
         self.in_recover = False
         self.in_wave = False
         self.in_lidar_cmd = False
+        self.in_rocking = False
 
         # operate parameter
         self.mode = BALANCE
@@ -131,6 +137,8 @@ class UserCommand(object):
 
             if cmd == '3' and self.target_mode == WALK:
                 self.in_lidar_cmd = True
+            if cmd == '4':
+                self.in_rocking = True
 
             if cmd == ' ':
                 is_input, _, _ = select.select([sys.stdin], [], [], 0.2)
@@ -138,11 +146,13 @@ class UserCommand(object):
                 if cmd == '0':
                     self.target_mode = BALANCE
                     self.in_lidar_cmd = False
+                    self.in_rocking = False
+                    self.rocking_iter = 0
                 elif cmd == '1':
                     self.target_mode = WALK
                     self.in_lidar_cmd = False
-                elif cmd == '2':
-                    self.target_mode = 2
+                    self.in_rocking = False
+                    self.rocking_iter = 0
                 if self.mode != self.target_mode:
                     self.in_recover = True
 
@@ -150,7 +160,6 @@ class UserCommand(object):
             # update cmd here
             if self.target_mode == WALK and self.in_lidar_cmd == True:
                 self.lcm.handle_timeout(1)
-
             else: # click one time, add one time
                 for idx in PARAMETER_ID_LIST:
                     if self.mode in PARAMETER_MODE_LIST[idx]:
@@ -160,6 +169,17 @@ class UserCommand(object):
                         elif cmd == PARAMETER_BUTTON_MINUS[idx] and self.parameter[idx]['value_raw'] - PARAMETER_MIN[
                             idx] > self.tol:
                             self.parameter[idx]['value_raw'] -= PARAMETER_INCREMENT[idx]
+
+            if self.in_rocking:
+                if self.target_mode == BALANCE:
+                    self.parameter[BODY_ORIENTATION_X]['value_raw'] = 6.0 * math.sin(self.rocking_iter * 0.1)
+                    self.parameter[BODY_ORIENTATION_Y]['value_raw'] = 4.0 * math.cos(self.rocking_iter * 0.1)
+                    self.parameter[COM_POSITION_Z]['value_raw'] = 0.04 * math.sin(self.rocking_iter * 0.2) - 0.03
+                    self.parameter[COM_POSITION_Y]['value_raw'] = 0.04 * math.cos(self.rocking_iter * 0.2) - 0.03
+                else:
+                    self.parameter[BODY_ORIENTATION_X]['value_raw'] = 6.0 * math.sin(self.rocking_iter * 0.1)
+                    self.parameter[COM_POSITION_Z]['value_raw'] = 0.04 * math.sin(self.rocking_iter * 0.2) - 0.03
+                self.rocking_iter += 1
         elif self.controller == 'gamepad':
             Bruce.update_gamepad_status()
 
@@ -422,7 +442,7 @@ def bruce_lidar_handler(channel, data):
     # print('lcm cmd: vel_com_x ', msg.com_velocity[0])
     # print('lcm cmd: vel_com_y', msg.com_velocity[1])
     # print('lcm cmd: vel_yaw_rate', msg.ang_vel_yaw)
-    uc.parameter[COM_POSITION_Z]['value_raw'] = msg.com_z
+    # uc.parameter[COM_POSITION_Z]['value_raw'] = msg.com_z
     uc.parameter[BODY_YAW_RATE]['value_raw'] = msg.ang_vel_yaw
     uc.parameter[COM_VELOCITY_X]['value_raw'] = msg.com_velocity[0]
     uc.parameter[COM_VELOCITY_Y]['value_raw'] = msg.com_velocity[1]
