@@ -77,7 +77,7 @@ COOLING_SPEED      = 12
 # Body COM / Body Orientation / COM Velocity / Body Yaw Rate / Swing Foot
 PARAMETER_ID_LIST      = range(13)
 PARAMETER_INCREMENT    = [ 0.05,  0.05,  0.002,       1,     1,     2,    0.01,  0.01,     1,       1,     1,  0.01,       1]
-PARAMETER_DEFAULT      = [ 0.00,  0.00,  0.000,       0,     0,     0,     0.0,   0.0,     0,       0,     0,  0.12,       0]
+PARAMETER_DEFAULT      = [ 0.00,  0.00,  0.000,       0,     0,     0,     0.0,   0.0,     0,       0,     0,  0.05,       0]
 PARAMETER_MAX          = [ 0.20,  0.50,  0.020,       8,    10,    30,    0.10,  0.10,    15,      10,    10,  0.20,       5]
 PARAMETER_MIN          = [-0.20, -0.50, -0.200,      -8,   -10,   -20,   -0.10, -0.10,   -15,     -10,   -10,  0.03,       0]
 # walk and balance can change without display.
