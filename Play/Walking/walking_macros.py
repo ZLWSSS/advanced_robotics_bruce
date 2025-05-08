@@ -174,6 +174,68 @@ for ti in t3:
             arm_trajectory[i].append(pose3[i] + amp3 * np.sin(ti))
         else:
             arm_trajectory[i].append(pose3[i])
+
+
+pose4 = np.array([
+    0.8, -0.6, 0.9,    # 左臂前平举略上扬
+   -0.6, 0.4, -0.7     # 右臂斜下张开
+])
+
+pose5 = np.array([
+    0.6, -0.4, 1.4,    # 左臂向上摆，稍微向外
+   -0.3, 0.7, -1.4     # 右臂较低、但抬起角度较大
+])
+
+for i in range(6):
+    arm_trajectory[i].extend(add_transition(arm_trajectory[i][-1], pose4[i]))
+
+t4 = np.linspace(0, 1.5 * 2 * np.pi, 20)
+amp4 = 0.25
+for ti in t4:
+    for i in range(6):
+        if i in (1, 4):
+            direction = -1 if i == 1 else 1
+            arm_trajectory[i].append(
+                pose4[i] + direction * amp4 * np.sin(ti)
+            )
+        else:
+            arm_trajectory[i].append(pose4[i])
+
+
+for i in range(6):
+    arm_trajectory[i].extend(
+        add_transition(
+            src=arm_trajectory[i][-1],
+            dst=pose5[i],
+            # frames=25
+        )
+    )
+
+
+t5 = np.linspace(0, 2 * 2 * np.pi, 30)
+amp5 = 0.18
+for ti in t5:
+    for i in range(6):
+        if i == 1:
+            arm_trajectory[i].append(
+                pose5[i] + amp5 * (np.sin(ti) + 0.3 * np.cos(2*ti))
+            )
+        elif i == 4:
+            arm_trajectory[i].append(
+                pose5[i] + amp5 * np.sin(ti + np.pi/2)
+            )
+        else:
+            arm_trajectory[i].append(pose5[i])
+
+# for i in range(6):
+#     arm_trajectory[i].extend(
+#         add_transition(
+#             src=arm_trajectory[i][-1],
+#             dst=pose5[i],
+#             # frames=20
+#         )
+#     )
+
             
 for i in range(6):
     arm_trajectory[i].extend(add_transition(arm_trajectory[i][-1], arm_position_nominal[i], frames=20))
