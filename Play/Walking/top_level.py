@@ -70,6 +70,8 @@ class UserCommand(object):
 
         self.wave_count = 0
         self.wave_hand = 1
+        self.motion_iter = 0
+        self.stop_rocking_flag = 0
 
         # initialize the controller
         if self.controller == 'keyboard':
@@ -138,6 +140,8 @@ class UserCommand(object):
             if cmd == '3' and self.target_mode == WALK:
                 self.in_lidar_cmd = True
             if cmd == '4':
+                if self.in_rocking:
+                    self.stop_rocking_flag=1
                 self.in_rocking = True
 
             if cmd == ' ':
@@ -170,16 +174,51 @@ class UserCommand(object):
                             idx] > self.tol:
                             self.parameter[idx]['value_raw'] -= PARAMETER_INCREMENT[idx]
 
+            # if self.in_rocking:
+            #     if self.target_mode == BALANCE:
+            #         self.parameter[BODY_ORIENTATION_X]['value_raw'] = 6.0 * math.sin(self.rocking_iter * 0.1)
+            #         self.parameter[BODY_ORIENTATION_Y]['value_raw'] = 4.0 * math.cos(self.rocking_iter * 0.1)
+            #         self.parameter[COM_POSITION_Z]['value_raw'] = 0.04 * math.sin(self.rocking_iter * 0.2) - 0.03
+            #         self.parameter[COM_POSITION_Y]['value_raw'] = 0.04 * math.cos(self.rocking_iter * 0.2) - 0.03
+            #     else:
+            #         self.parameter[BODY_ORIENTATION_X]['value_raw'] = 6.0 * math.sin(self.rocking_iter * 0.1)
+            #         self.parameter[COM_POSITION_Z]['value_raw'] = 0.04 * math.sin(self.rocking_iter * 0.2) - 0.03
+            #     self.rocking_iter += 1
+
+
             if self.in_rocking:
+                total_frames = arm_trajectory[0].size
+                idx = self.motion_iter % total_frames 
+
+                for joint_idx, joint in enumerate(ARM_JOINT_LIST):
+                    Bruce.joint[joint]['q_goal'] = arm_trajectory[joint_idx][idx]
+                Bruce.set_command_arm_positions()
+
+                self.parameter[BODY_ORIENTATION_X]['value_raw'] = 6.0 * math.sin(self.motion_iter * 0.1)
+
                 if self.target_mode == BALANCE:
-                    self.parameter[BODY_ORIENTATION_X]['value_raw'] = 6.0 * math.sin(self.rocking_iter * 0.1)
-                    self.parameter[BODY_ORIENTATION_Y]['value_raw'] = 4.0 * math.cos(self.rocking_iter * 0.1)
-                    self.parameter[COM_POSITION_Z]['value_raw'] = 0.04 * math.sin(self.rocking_iter * 0.2) - 0.03
-                    self.parameter[COM_POSITION_Y]['value_raw'] = 0.04 * math.cos(self.rocking_iter * 0.2) - 0.03
+                    self.parameter[BODY_ORIENTATION_Y]['value_raw'] = 4.0 * math.cos(self.motion_iter * 0.1)
+                    self.parameter[COM_POSITION_Z]['value_raw'] = 0.04 * math.sin(self.motion_iter * 0.2) - 0.03
+                    self.parameter[COM_POSITION_Y]['value_raw'] = 0.04 * math.cos(self.motion_iter * 0.2) - 0.03
                 else:
-                    self.parameter[BODY_ORIENTATION_X]['value_raw'] = 6.0 * math.sin(self.rocking_iter * 0.1)
-                    self.parameter[COM_POSITION_Z]['value_raw'] = 0.04 * math.sin(self.rocking_iter * 0.2) - 0.03
-                self.rocking_iter += 1
+                    self.parameter[COM_POSITION_Z]['value_raw'] = 0.04 * math.sin(self.motion_iter * 0.2) - 0.03
+
+                self.motion_iter += 1
+
+                if self.stop_rocking_flag:
+                    for i, joint in enumerate(ARM_JOINT_LIST):
+                        Bruce.joint[joint]['q_goal'] = arm_position_nominal[i]
+                    Bruce.set_command_arm_positions()
+
+                    self.parameter[BODY_ORIENTATION_X]['value_raw'] = 0.0
+                    self.parameter[BODY_ORIENTATION_Y]['value_raw'] = 0.0
+                    self.parameter[COM_POSITION_Z]['value_raw'] = -0.03
+                    self.parameter[COM_POSITION_Y]['value_raw'] = -0.03
+
+                    self.motion_iter = 0
+                    self.in_rocking = False
+                    self.stop_rocking_flag = False
+
         elif self.controller == 'gamepad':
             Bruce.update_gamepad_status()
 
@@ -296,34 +335,6 @@ class UserCommand(object):
                       'cooling_speed': np.array([self.parameter[COOLING_SPEED]['value_raw']]),
                       }
         MM.USER_COMMAND.set(input_data)
-
-    # def wave(self):
-    #     if self.wave_count < arm_trajectory[0].size:
-    #         if self.wave_hand == -1:
-    #             for idx, joint in enumerate(ARM_JOINT_LIST[0:3]):
-    #                 Bruce.joint[joint]['q_goal'] = arm_trajectory[idx][self.wave_count]
-    #             for idx, joint in enumerate(ARM_JOINT_LIST[3:6]):
-    #                 Bruce.joint[joint]['q_goal'] = arm_position_nominal[idx + 3]
-    #         elif self.wave_hand == 1:
-    #             for idx, joint in enumerate(ARM_JOINT_LIST[0:3]):
-    #                 Bruce.joint[joint]['q_goal'] = arm_position_nominal[idx]
-    #             for idx, joint in enumerate(ARM_JOINT_LIST[3:6]):
-    #                 Bruce.joint[joint]['q_goal'] = arm_trajectory[idx + 3][self.wave_count]
-    #         else:
-    #             for idx, joint in enumerate(ARM_JOINT_LIST):
-    #                 Bruce.joint[joint]['q_goal'] = arm_trajectory[idx][self.wave_count]
-    #         Bruce.set_command_arm_positions()
-    #         self.wave_count += 1
-    #     else:
-    #         self.wave_count = 0
-    #         self.in_wave = False
-    #         val = random.random()
-    #         if val > 0.666:
-    #             self.wave_hand = -1
-    #         elif val > 0.333:
-    #             self.wave_hand = 1
-    #         else:
-    #             self.wave_hand = 2
 
 
     def wave(self):

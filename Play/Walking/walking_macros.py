@@ -104,28 +104,7 @@ PARAMETER_MODE_LIST = {COM_POSITION_X:     [BALANCE],
                        COOLING_SPEED:      [BALANCE, WALK]
                        }
 
-# # wave trajectory
-# arm_position_nominal = np.array([-0.7,  1.3,  2.0, 
-#                                   0.7, -1.3, -2.0])
-# arm_position_goal    = np.array([0.0, -1.2, 0.0,
-#                                  0.0,  1.2, 0.0])
-# arm_trajectory = defaultdict()
-
-# for i in range(6):
-#     arm_trajectory[i] = np.linspace(arm_position_nominal[i], arm_position_goal[i], 20, endpoint=True)
-
-# traj_time = np.linspace(0, 2.75 * 2 * np.pi, 30)
-# for tdx in traj_time:
-#     arm_trajectory[1] = np.append(arm_trajectory[1], arm_position_goal[1] - 0.3 * np.sin(tdx))
-#     arm_trajectory[4] = np.append(arm_trajectory[4], arm_position_goal[4] + 0.3 * np.sin(tdx))
-
-#     for i in [0, 2, 3, 5]:
-#         arm_trajectory[i] = np.append(arm_trajectory[i], arm_position_goal[i])
-
-# for i in range(6):
-#     arm_trajectory[i] = np.append(arm_trajectory[i], np.linspace(arm_trajectory[i][-1], arm_position_nominal[i], 20, endpoint=True))
-
-
+# wave trajectory
 
 arm_position_nominal = np.array([-0.7,  1.3,  2.0, 
                                   0.7, -1.3, -2.0])
@@ -181,10 +160,10 @@ pose4 = np.array([
    -0.6, 0.4, -0.7     # 右臂斜下张开
 ])
 
-pose5 = np.array([
-    0.6, -0.4, 1.4,    # 左臂向上摆，稍微向外
-   -0.3, 0.7, -1.4     # 右臂较低、但抬起角度较大
-])
+# pose5 = np.array([
+#     0.6, -0.4, 1.4,    # 左臂向上摆，稍微向外
+#    -0.3, 0.7, -1.4     # 右臂较低、但抬起角度较大
+# ])
 
 for i in range(6):
     arm_trajectory[i].extend(add_transition(arm_trajectory[i][-1], pose4[i]))
@@ -201,42 +180,7 @@ for ti in t4:
         else:
             arm_trajectory[i].append(pose4[i])
 
-
-for i in range(6):
-    arm_trajectory[i].extend(
-        add_transition(
-            src=arm_trajectory[i][-1],
-            dst=pose5[i],
-            # frames=25
-        )
-    )
-
-
-t5 = np.linspace(0, 2 * 2 * np.pi, 30)
-amp5 = 0.18
-for ti in t5:
-    for i in range(6):
-        if i == 1:
-            arm_trajectory[i].append(
-                pose5[i] + amp5 * (np.sin(ti) + 0.3 * np.cos(2*ti))
-            )
-        elif i == 4:
-            arm_trajectory[i].append(
-                pose5[i] + amp5 * np.sin(ti + np.pi/2)
-            )
-        else:
-            arm_trajectory[i].append(pose5[i])
-
-# for i in range(6):
-#     arm_trajectory[i].extend(
-#         add_transition(
-#             src=arm_trajectory[i][-1],
-#             dst=pose5[i],
-#             # frames=20
-#         )
-#     )
-
-            
+         
 for i in range(6):
     arm_trajectory[i].extend(add_transition(arm_trajectory[i][-1], arm_position_nominal[i], frames=20))
 
